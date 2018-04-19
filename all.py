@@ -10,6 +10,7 @@ import cv2
 import threading
 import csv
 import os
+from subprocess import call
 
 # Initialization
 GPIO.setmode(GPIO.BOARD)
@@ -150,13 +151,18 @@ def collect_data2():
     cam = cv2.VideoCapture(0)
     while dir != "q":
         s, im = cam.read()
-        name = "imgs/" + str(data_size) + ".bmp"
+        a,b = current_state
+        #d = dist()
+        d = 76.35
+        #name = "imgs2/" + str(time.time()) + "-" + str(d) + "-" + a + "-" + b + ".bmp"
+        name = str(time.time()) + "-" + str(d) + "-" + a + "-" + b + ".bmp"
         cv2.imwrite(name, im)
-        d = dist()
-        print(d)
+        call(['sshpass', '-p', 'Gr4ndT3ton!', 'ssh', 'ncogswell@gattaca.cs.middlebury.edu', "rm *.bmp"])
+        call(['sshpass', '-p', 'Gr4ndT3ton!', 'scp', name, 'ncogswell@gattaca.cs.middlebury.edu:'])
+        call(['rm', name])
         dist_array.append([d,current_state])
         data_size = data_size + 1
-        time.sleep(.2)
+        #time.sleep(.2)
 
 def save_data():
     global data
@@ -165,7 +171,7 @@ def save_data():
         if index < data_size:
             print (filename, " ", index, " ", dist_array[index])
             distance, direction = dist_array[index]
-            im = cv2.imread("imgs/"+filename)
+            im = cv2.imread("imgs2/"+filename)
             temp = np.array(im)
             flattened = temp.flatten()
             data.append([flattened.tolist(), distance, direction])
@@ -178,6 +184,7 @@ data = [] #a list of data points stored as tuples
 dist_array = []
 data_size = 0
 
+print("Almost ready...")
 thread = threading.Thread(target=collect_data2, name="data_collection")
 thread.start()
 
@@ -205,10 +212,10 @@ print ("Done")
 GPIO.cleanup()
 
 # Write data to file to be read in on another computer
-save_data()
+#save_data()
 
-csvfile = "training_data.csv"
+#csvfile = "training_data.csv"
 
-with open(csvfile, "w") as output:
-    writer = csv.writer(output, lineterminator='\n')
-    writer.writerows(data)
+#with open(csvfile, "w") as output:
+#    writer = csv.writer(output, lineterminator='\n')
+#    writer.writerows(data)
